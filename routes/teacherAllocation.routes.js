@@ -17,7 +17,7 @@ router.use(checkCollegeAccess);
 
 router
   .route("/")
-  .get(getAllAllocations) // Teachers might need to see this too? Let's assume admin for now, or allow all authorized users
+  .get(getAllAllocations)
   .post(authorize("admin"), createAllocation);
 
 router.route("/:id").delete(authorize("admin"), deleteAllocation);

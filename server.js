@@ -10,7 +10,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Import routes
 import authRoutes from "./routes/authroutes.js";
 import collegeRoutes from "./routes/collegeroutes.js";
 import departmentRoutes from "./routes/departmentroutes.js";
@@ -25,28 +24,33 @@ import mapRoutes from "./routes/maproutes.js";
 import teacherAllocationRoutes from "./routes/teacherAllocation.routes.js";
 import superAdminRoutes from "./routes/superAdmin.routes.js";
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(helmet()); // Security headers
+app.use(helmet());
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   }),
 );
-app.use(morgan("dev")); // Logging
-app.use(express.json({ limit: "20mb" })); // Body parser with file upload support
+app.use(morgan("dev"));
+app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 
-// Static folder for file uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads", "others")));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads", "students")),
+);
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads", "teachers")),
+);
 
-// Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "UP",
@@ -56,7 +60,6 @@ app.get("/health", (req, res) => {
   });
 });
 
-// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/colleges", collegeRoutes);
 app.use("/api/departments", departmentRoutes);
@@ -72,14 +75,12 @@ app.use("/api/maps", mapRoutes);
 app.use("/api/teacher-allocations", teacherAllocationRoutes);
 app.use("/api/super-admin", superAdminRoutes);
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error("Error:", err);
 
   let statusCode = err.statusCode || 500;
   let message = err.message || "Internal Server Error";
 
-  // Handle Multer errors
   if (err.code === "LIMIT_FILE_SIZE") {
     statusCode = 400;
     message = "File too large. Maximum size allowed is 20MB.";
@@ -92,7 +93,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -100,13 +100,11 @@ app.use((req, res) => {
   });
 });
 
-// Database connection
 mongoose
   .connect(process.env.MONGODB_URI || "mongodb://localhost:27017/examseatpro")
   .then(() => {
     console.log("✅ MongoDB Connected Successfully");
 
-    // Start server
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📍 Environment: ${process.env.NODE_ENV || "development"}`);
@@ -120,7 +118,6 @@ mongoose
     process.exit(1);
   });
 
-// Graceful shutdown
 process.on("SIGTERM", () => {
   console.log("SIGTERM received, closing server gracefully...");
   mongoose.connection.close();

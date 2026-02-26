@@ -10,7 +10,7 @@ export const getAllColleges = async (req, res, next) => {
   try {
     const colleges = await College.find({}).sort({ createdAt: -1 });
 
-    // We want to include some counts if possible, but for now just the basic info
+
     res.status(200).json({
       success: true,
       count: colleges.length,
@@ -63,15 +63,15 @@ export const deleteCollege = async (req, res, next) => {
         .json({ success: false, message: "College not found" });
     }
 
-    // Instead of actual deletion, we could just deactivate, but user said "delete"
-    // Let's implement actual deletion or soft-delete?
-    // Usually super admins want to fully remove if they are "cleaning up"
-    // But "terminate" often means deactivate.
 
-    // For now, let's do a hard delete as requested
+
+
+
+
+
     await college.deleteOne();
 
-    // Also should probably delete or deactivate all users associated with this college
+
     await User.deleteMany({ college: req.params.id });
 
     res.status(200).json({

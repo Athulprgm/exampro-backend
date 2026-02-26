@@ -19,7 +19,7 @@ export const registerCollege = async (req, res, next) => {
       adminRole,
     } = req.body;
 
-    // Check if college with email already exists
+
     const existingCollege = await College.findOne({ adminEmail });
     if (existingCollege) {
       return res.status(400).json({
@@ -28,12 +28,12 @@ export const registerCollege = async (req, res, next) => {
       });
     }
 
-    // Generate unique college code
+
     const prefix = collegeName.substring(0, 3).toUpperCase();
     const random = Math.floor(1000 + Math.random() * 9000);
     const collegeCode = `${prefix}${random}`;
 
-    // Create college
+
     const college = await College.create({
       collegeName,
       collegeCode,
@@ -44,7 +44,7 @@ export const registerCollege = async (req, res, next) => {
       adminName,
     });
 
-    // Create admin user
+
     const adminUser = await User.create({
       username: adminName,
       email: adminEmail,
@@ -111,13 +111,13 @@ export const updateCollege = async (req, res, next) => {
 
     const { adminPassword, adminEmail, adminName, adminContact } = req.body;
 
-    // Update college record
+
     college = await College.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
 
-    // Sync with User record
+
     const user = await User.findOne({
       college: college._id,
       $or: [{ role: "admin" }, { role: "superadmin" }],
@@ -169,7 +169,7 @@ export const deleteCollege = async (req, res, next) => {
       });
     }
 
-    // Also delete associated users
+
     await User.deleteMany({ college: req.params.id });
 
     res.status(200).json({

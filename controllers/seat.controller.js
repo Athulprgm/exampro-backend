@@ -21,7 +21,6 @@ export const getArrangementByExam = async (req, res, next) => {
       });
     }
 
-    // Resolve the full slot context
     const examDate = new Date(targetArrangement.exam.date);
     const startOfDay = new Date(new Date(examDate).setHours(0, 0, 0, 0));
     const endOfDay = new Date(new Date(examDate).setHours(23, 59, 59, 999));
@@ -35,7 +34,6 @@ export const getArrangementByExam = async (req, res, next) => {
 
     const examIds = slotExams.map((e) => e._id);
 
-    // Fetch all arrangements for this slot to provide a combined room view
     const slotArrangements = await SeatArrangement.find({
       exam: { $in: examIds },
       college: req.userCollege,
@@ -43,7 +41,7 @@ export const getArrangementByExam = async (req, res, next) => {
       .populate("exam", "name subject paperName paperCode department semester")
       .populate(
         "halls.seats.student",
-        "username registerNumber department subject",
+        "username registerNumber department subject email photo",
       )
       .populate(
         "halls.seats.examRef",
@@ -51,12 +49,11 @@ export const getArrangementByExam = async (req, res, next) => {
       )
       .populate("halls.room", "name capacity");
 
-    // Merge logic: Combine halls from all arrangements in the slot
     const hallMap = {};
 
     slotArrangements.forEach((arr) => {
       arr.halls.forEach((hall) => {
-        if (!hall.room) return; // Skip if room was deleted
+        if (!hall.room) return;
         const roomId = hall.room._id.toString();
         if (!hallMap[roomId]) {
           hallMap[roomId] = {
@@ -65,17 +62,16 @@ export const getArrangementByExam = async (req, res, next) => {
             seats: [],
           };
         }
-        // Add seats from this exam's arrangement
+
         hallMap[roomId].seats.push(...hall.seats);
       });
     });
 
-    // Create a virtual arrangement object for the response
     const combinedArrangement = {
       ...targetArrangement.toObject(),
       halls: Object.values(hallMap).map((h) => ({
         ...h,
-        // Sort seats to maintain original grid order if needed
+
         seats: h.seats.sort((a, b) => a.row - b.row || a.col - b.col),
       })),
       isCombinedView: slotArrangements.length > 1,
@@ -93,7 +89,6 @@ export const createArrangement = async (req, res, next) => {
     const { examId } = req.body;
     const collegeId = req.userCollege;
 
-    // 1. Resolve Target and Slot Exams
     const selectedExam = await Exam.findById(examId);
     if (!selectedExam)
       return res.status(404).json({ message: "Exam not found" });
@@ -111,7 +106,6 @@ export const createArrangement = async (req, res, next) => {
 
     const normalize = (str) => (str || "").toLowerCase().replace(/[.\s-]/g, "");
 
-    // 2. Fetch Global Student Pool for involved Semesters
     const semestersInSlot = [...new Set(slotExams.map((e) => e.semester))];
     const allEligibleStudents = await User.find({
       college: collegeId,
@@ -120,7 +114,6 @@ export const createArrangement = async (req, res, next) => {
       isActive: true,
     });
 
-    // 3. Mapping: Group students for each specific exam in the slot
     const studentsByExam = {};
     const globalAssignedIds = new Set();
 
@@ -131,14 +124,12 @@ export const createArrangement = async (req, res, next) => {
 
       const ePaper = normalize(ex.paperName);
 
-      // 1. Mandatory match: Semester & Department
       const deptPool = allEligibleStudents.filter((s) => {
         const sSem = Number(s.semester);
         const sDept = normalize(s.department);
         return sSem === Number(ex.semester) && sDept === eDept;
       });
 
-      // 2. Smart Matching (Subject -> Paper Name -> Full Dept):
       let matched = deptPool.filter((s) => normalize(s.subject) === eSub);
 
       if (matched.length === 0) {
@@ -149,7 +140,6 @@ export const createArrangement = async (req, res, next) => {
         matched = deptPool;
       }
 
-      // 3. Prevent duplicate assignment within this slot
       const uniqueToExam = matched.filter(
         (s) => !globalAssignedIds.has(s._id.toString()),
       );
@@ -161,8 +151,6 @@ export const createArrangement = async (req, res, next) => {
       );
     });
 
-    // 4. Grouping by Department (Conflict Key)
-    // We group by Department to ensure even different semesters in the same dept have gaps
     const conflictQueuesMap = {};
     slotExams.forEach((ex) => {
       const deptKey = normalize(ex.department);
@@ -192,19 +180,17 @@ export const createArrangement = async (req, res, next) => {
       });
     }
 
-    // 5. Infrastructure Check & Cleanup
     const rooms = await Room.find({ college: collegeId, isActive: true }).sort({
       capacity: -1,
     });
 
     const examIds = slotExams.map((e) => e._id);
-    // CRITICAL: Clear all existing arrangements for this slot to prevent overlapping data
+
     await SeatArrangement.deleteMany({
       exam: { $in: examIds },
       college: collegeId,
     });
 
-    // 6. Master Blueprint Generation (Gap-Aware 2D Allocation)
     let masterBlueprint = [];
     let currentQueues = [...queues];
 
@@ -212,7 +198,7 @@ export const createArrangement = async (req, res, next) => {
       if (currentQueues.length === 0) break;
 
       const roomBlueprint = [];
-      const cols = 4; // Standard 4-seat bench/row layout
+      const cols = 4;
       const rows = Math.ceil(room.capacity / cols);
       const grid = Array.from({ length: rows }, () => Array(cols).fill(null));
 
@@ -222,20 +208,17 @@ export const createArrangement = async (req, res, next) => {
           if (seatCount >= room.capacity) break;
           if (currentQueues.length === 0) break;
 
-          // Adjacency Constraints (Same Dept = Conflict)
           const leftKey =
             c > 0 && grid[r][c - 1] ? grid[r][c - 1].conflictKey : null;
           const topKey =
             r > 0 && grid[r - 1][c] ? grid[r - 1][c].conflictKey : null;
 
-          // Try to find a student who doesn't match left or top neighbor's department
           currentQueues.sort((a, b) => b.list.length - a.list.length);
 
           let targetQueueIdx = currentQueues.findIndex(
             (q) => q.key !== leftKey && q.key !== topKey,
           );
 
-          // If no "safe" student found, leave the seat EMPTY (The Gap)
           if (targetQueueIdx === -1) {
             continue;
           }
@@ -254,7 +237,6 @@ export const createArrangement = async (req, res, next) => {
             isVerified: false,
           });
 
-          // Refresh active queues
           currentQueues = currentQueues.filter((q) => q.list.length > 0);
         }
       }
@@ -274,7 +256,7 @@ export const createArrangement = async (req, res, next) => {
         (q.list.length +
           (queues.find((orig) => orig.key === q.key)?.originalLength || 0)),
       0,
-    ); // This count is tricky, let's just use the original pool size
+    );
     const remainingCount = currentQueues.reduce(
       (sum, q) => sum + q.list.length,
       0,
@@ -286,7 +268,6 @@ export const createArrangement = async (req, res, next) => {
       });
     }
 
-    // 7. Partitioning and Persistent Storage
     const saveOps = slotExams.map(async (exam) => {
       const eId = exam._id.toString();
 
@@ -351,14 +332,12 @@ export const deleteArrangement = async (req, res, next) => {
     }
 
     if (!targetArrangement.exam) {
-      // If exam is missing, just delete this arrangement and return
       await SeatArrangement.findByIdAndDelete(req.params.id);
       return res
         .status(200)
         .json({ message: "Dangling arrangement deleted successfully" });
     }
 
-    // Find all exams at the same Date and Time slot
     const examDate = new Date(targetArrangement.exam.date);
     const startOfDay = new Date(examDate.setHours(0, 0, 0, 0));
     const endOfDay = new Date(examDate.setHours(23, 59, 59, 999));
@@ -371,7 +350,6 @@ export const deleteArrangement = async (req, res, next) => {
 
     const examIds = slotExams.map((e) => e._id);
 
-    // Delete all arrangements in this slot
     await SeatArrangement.deleteMany({
       exam: { $in: examIds },
       college: req.userCollege,
@@ -401,7 +379,6 @@ export const getStudentSeat = async (req, res, next) => {
       return res.status(404).json({ message: "Seat not allocated yet" });
     }
 
-    // Extract the specific seat for this student
     let studentSeat = null;
     let studentHall = null;
 

@@ -4,13 +4,7 @@ import fs from "fs";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    let uploadPath = "uploads/others"; // Default
-
-    if (req.originalUrl.includes("teachers")) {
-      uploadPath = "uploads/teachers";
-    } else if (req.originalUrl.includes("students")) {
-      uploadPath = "uploads/students";
-    }
+    const uploadPath = "uploads";
 
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
@@ -19,7 +13,6 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    // Save with unique name: fieldname-timestamp.extension
     cb(
       null,
       `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`,
@@ -27,7 +20,6 @@ const storage = multer.diskStorage({
   },
 });
 
-// File filter to only allow certain image types
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|webp/;
   const extname = allowedTypes.test(
@@ -44,7 +36,7 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit
+  limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter,
 });
 

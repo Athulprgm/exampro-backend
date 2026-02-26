@@ -33,12 +33,6 @@ export const login = async (req, res, next) => {
       });
     }
 
-    // Find user by username or email
-    // We check:
-    // 1. Exact username match
-    // 2. Exact email match (for legacy)
-    // 3. Lowercase email match (since emails are stored lowercase)
-    // 4. Register number / Teacher ID
     const user = await User.findOne({
       $or: [
         { username },
@@ -57,7 +51,6 @@ export const login = async (req, res, next) => {
       });
     }
 
-    // Check password
     const isMatch = await user.comparePassword(password);
 
     if (!isMatch) {
@@ -70,10 +63,8 @@ export const login = async (req, res, next) => {
 
     console.log("Login successful for:", user.username);
 
-    // Generate token
     const token = generateToken(user._id);
 
-    // Remove password from response
     const userResponse = user.toJSON();
 
     res.status(200).json({
@@ -121,24 +112,21 @@ export const forgotPassword = async (req, res, next) => {
     });
 
     if (!user) {
-      // Don't reveal if user exists or not
       return res.status(200).json({
         success: true,
         message: "If an account exists, a password reset email has been sent",
       });
     }
 
-    // Generate reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
     user.resetPasswordToken = crypto
       .createHash("sha256")
       .update(resetToken)
       .digest("hex");
-    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
 
     await user.save({ validateBeforeSave: false });
 
-    // Create reset url
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
     const message = `You are receiving this email because you (or someone else) have requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
@@ -201,7 +189,6 @@ export const resetPassword = async (req, res, next) => {
       });
     }
 
-    // Set new password
     user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
@@ -249,7 +236,12 @@ export const updateProfile = async (req, res, next) => {
     if (username) user.username = username;
     if (email) user.email = email;
     if (contactNumber) user.contactNumber = contactNumber;
-    if (photo) user.photo = photo;
+
+    if (req.file) {
+      user.photo = req.file.filename;
+    } else if (photo) {
+      user.photo = photo;
+    }
 
     await user.save();
 

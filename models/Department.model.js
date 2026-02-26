@@ -36,7 +36,7 @@ const departmentSchema = new mongoose.Schema(
   },
 );
 
-// Compound index to ensure unique department per college
+
 departmentSchema.index(
   { name: 1, subjectName: 1, college: 1 },
   { unique: true },

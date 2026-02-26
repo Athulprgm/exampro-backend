@@ -43,7 +43,7 @@ const collegeSchema = new mongoose.Schema(
   },
 );
 
-// Generate unique college code before saving
+
 collegeSchema.pre("save", async function (next) {
   if (!this.collegeCode) {
     const prefix = this.collegeName.substring(0, 3).toUpperCase();

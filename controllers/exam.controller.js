@@ -4,7 +4,7 @@ export const getAllExams = async (req, res, next) => {
   try {
     const query = { college: req.userCollege };
 
-    // If student, only show exams matching their department, subject, and semester
+
     if (req.user.role === "student") {
       query.department = req.user.department;
       query.subject = req.user.subject;
@@ -27,7 +27,7 @@ export const getExam = async (req, res, next) => {
       college: req.userCollege,
     };
 
-    // If student, only show exam if it matches their department, subject, and semester
+
     if (req.user.role === "student") {
       query.department = req.user.department;
       query.subject = req.user.subject;
@@ -84,7 +84,7 @@ export const updateExam = async (req, res, next) => {
   try {
     const exam = await Exam.findOneAndUpdate(
       { _id: req.params.id, college: req.userCollege },
-      { $set: req.body }, // Use $set to ensure nested/additional fields are updated correctly
+      { $set: req.body },
       { new: true, runValidators: true },
     );
 

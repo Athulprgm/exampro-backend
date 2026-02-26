@@ -45,7 +45,7 @@ const subjectSchema = new mongoose.Schema(
   },
 );
 
-// Compound index
+
 subjectSchema.index({ code: 1, college: 1 }, { unique: true });
 
 const Subject = mongoose.model("Subject", subjectSchema);

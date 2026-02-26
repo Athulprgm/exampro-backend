@@ -9,7 +9,7 @@ const buildingMapSchema = new mongoose.Schema(
     },
     floor: {
       type: Number,
-      default: 0, // 0 for Ground, 1 for First, etc.
+      default: 0,
     },
     nodes: [
       {
@@ -41,7 +41,7 @@ const buildingMapSchema = new mongoose.Schema(
   },
 );
 
-// Compound index for unique map per floor per college
+
 buildingMapSchema.index({ college: 1, floor: 1 }, { unique: true });
 
 const BuildingMap = mongoose.model("BuildingMap", buildingMapSchema);

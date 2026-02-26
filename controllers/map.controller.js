@@ -51,9 +51,9 @@ export const saveMap = async (req, res, next) => {
       });
     }
 
-    // Ultra-Strict Sanitization
+
     const sanitizedNodes = (nodes || []).map((node, index) => {
-      // Validate basic geometry
+
       if (typeof node.x !== "number" || typeof node.y !== "number") {
         throw new Error(
           `Node at index ${index} has invalid coordinates (x: ${node.x}, y: ${node.y})`,
@@ -73,7 +73,7 @@ export const saveMap = async (req, res, next) => {
         label: node.label ? String(node.label) : "",
       };
 
-      // Strict ObjectId validation for roomId
+
       if (
         node.roomId &&
         node.roomId !== "" &&
@@ -92,7 +92,7 @@ export const saveMap = async (req, res, next) => {
         to: String(edge.to),
       }));
 
-    // Use updateOne w/ upsert
+
     const result = await BuildingMap.updateOne(
       { college: req.userCollege, floor: floorNum },
       {
@@ -105,7 +105,7 @@ export const saveMap = async (req, res, next) => {
       { upsert: true, runValidators: true },
     );
 
-    // Fetch result
+
     const updatedMap = await BuildingMap.findOne({
       college: req.userCollege,
       floor: floorNum,
@@ -157,7 +157,7 @@ export const getStudentRoute = async (req, res, next) => {
   try {
     const { rollNumber } = req.params;
 
-    // 1. Find Student (Case-insensitive search)
+
     const student = await User.findOne({
       registerNumber: { $regex: new RegExp(`^${rollNumber}$`, "i") },
       role: "student",
@@ -170,7 +170,7 @@ export const getStudentRoute = async (req, res, next) => {
         .json({ message: "Student not found with this Roll Number" });
     }
 
-    // 2. Find Seat Arrangement
+
     const { examId } = req.query;
     const query = {
       "halls.seats.student": student._id,
@@ -184,7 +184,7 @@ export const getStudentRoute = async (req, res, next) => {
     const arrangement = await SeatArrangement.findOne(query)
       .populate("halls.room")
       .populate("exam")
-      .sort({ createdAt: -1 }); // Get the latest one if multiple exist
+      .sort({ createdAt: -1 });
 
     if (!arrangement) {
       return res
@@ -192,7 +192,7 @@ export const getStudentRoute = async (req, res, next) => {
         .json({ message: "No active seat allocation found for this student" });
     }
 
-    // 3. Find Room in Arrangement
+
     let targetHall = null;
     for (const hall of arrangement.halls) {
       const hasSeat = hall.seats.some(
@@ -213,7 +213,7 @@ export const getStudentRoute = async (req, res, next) => {
     const targetRoom = targetHall.room;
     const floorNum = parseInt(targetRoom.floor) || 0;
 
-    // 4. Find Node ID in Map for that specific floor
+
     const map = await BuildingMap.findOne({
       college: req.userCollege,
       floor: floorNum,

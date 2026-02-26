@@ -61,7 +61,7 @@ const seatArrangementSchema = new mongoose.Schema(
   },
 );
 
-// Ensure one arrangement per exam
+
 seatArrangementSchema.index({ exam: 1 }, { unique: true });
 
 const SeatArrangement = mongoose.model(

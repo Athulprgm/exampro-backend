@@ -28,7 +28,7 @@ export const createStudent = async (req, res, next) => {
       contactNumber,
     } = req.body;
 
-    // Check if user already exists
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -37,7 +37,7 @@ export const createStudent = async (req, res, next) => {
       });
     }
 
-    // Generate random password
+
     const tempPassword = crypto.randomBytes(4).toString("hex");
 
     const photo = req.file
@@ -59,7 +59,7 @@ export const createStudent = async (req, res, next) => {
       photo,
     });
 
-    // Send email with password
+
     try {
       await sendEmail({
         email: student.email,

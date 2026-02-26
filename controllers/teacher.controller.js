@@ -32,7 +32,7 @@ export const createTeacher = async (req, res, next) => {
       sendEmail: shouldSendEmail,
     } = req.body;
 
-    // Check if user already exists
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -41,7 +41,7 @@ export const createTeacher = async (req, res, next) => {
       });
     }
 
-    // Check if teacherId already exists
+
     if (teacherId) {
       const existingId = await User.findOne({ teacherId: teacherId.trim() });
       if (existingId) {
@@ -52,7 +52,7 @@ export const createTeacher = async (req, res, next) => {
       }
     }
 
-    // Generate random password
+
     const tempPassword = crypto.randomBytes(4).toString("hex");
 
     const photo = req.file
@@ -71,7 +71,7 @@ export const createTeacher = async (req, res, next) => {
       photo,
     });
 
-    // Send email with password
+
     if (shouldSendEmail !== false) {
       try {
         await sendEmail({
@@ -114,7 +114,7 @@ export const updateTeacher = async (req, res, next) => {
       return res.status(404).json({ message: "Teacher not found" });
     }
 
-    // 1. Handle Email Update
+
     if (email && email !== teacher.email) {
       const normalizedEmail = email.toLowerCase().trim();
       const existingEmail = await User.findOne({ email: normalizedEmail });
@@ -127,7 +127,7 @@ export const updateTeacher = async (req, res, next) => {
       teacher.email = normalizedEmail;
     }
 
-    // 2. Handle Teacher ID Update
+
     if (teacherId && teacherId !== teacher.teacherId) {
       const existingId = await User.findOne({ teacherId: teacherId.trim() });
       if (existingId) {
@@ -139,7 +139,7 @@ export const updateTeacher = async (req, res, next) => {
       teacher.teacherId = teacherId.trim();
     }
 
-    // 3. Update other fields
+
     if (name) teacher.username = name;
     if (department) teacher.department = department;
     if (contactNumber) teacher.contactNumber = contactNumber;

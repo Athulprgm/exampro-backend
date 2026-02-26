@@ -5,16 +5,16 @@ import Exam from "./models/Exam.model.js";
 
 const run = async () => {
   try {
-    // Hardcoded connection string from .env
+
     const uri = "mongodb://localhost:27017/examseatpro";
     await mongoose.connect(uri);
     console.log("Connected to MongoDB at " + uri);
 
-    const examId = "698ee9d38d43e82011cdc507"; // from error log
+    const examId = "698ee9d38d43e82011cdc507";
     console.log(`Checking Exam ID: ${examId}`);
 
-    // Check if exam exists.
-    // If ID is not valid ObjectId, findById throws error, so we catch it.
+
+
     if (!mongoose.Types.ObjectId.isValid(examId)) {
       console.log("Invalid Exam ID format.");
       return;

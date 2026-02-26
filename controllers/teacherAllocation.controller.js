@@ -21,23 +21,23 @@ export const createAllocation = async (req, res, next) => {
   try {
     const { exam: examId, teacher: teacherId, room: roomId } = req.body;
 
-    // Fetch the target exam to get its date and time
+
     const targetExam = await Exam.findById(examId);
     if (!targetExam) {
       return res.status(404).json({ message: "Exam not found" });
     }
 
-    // Check if the teacher is already allocated at the SAME Date and Time
-    // We need to look at all allocations and check their associated exams
+
+
     const existingAllocations = await TeacherAllocation.find({
       college: req.userCollege,
     }).populate("exam");
 
     const conflict = existingAllocations.find((a) => {
-      // Safety checks for dangling references (deleted exams, teachers, or rooms)
+
       if (!a.exam || !a.teacher || !a.room) return false;
 
-      // Use a robust date string comparison
+
       const slotDate = new Date(a.exam.date).toISOString().split("T")[0];
       const targetDate = new Date(targetExam.date).toISOString().split("T")[0];
 
@@ -46,7 +46,7 @@ export const createAllocation = async (req, res, next) => {
 
       if (!isSameSlot) return false;
 
-      // Conflict if same teacher in different room OR same room with different teacher
+
       const isSameTeacher = a.teacher.toString() === teacherId?.toString();
       const isSameRoom = a.room.toString() === roomId?.toString();
 

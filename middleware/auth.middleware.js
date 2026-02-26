@@ -8,7 +8,7 @@ export const protect = async (req, res, next) => {
   try {
     let token;
 
-    // Check for token in Authorization header
+
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
@@ -24,10 +24,10 @@ export const protect = async (req, res, next) => {
     }
 
     try {
-      // Verify token
+
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from token (excluding password)
+
       req.user = await User.findById(decoded.id).select("-password");
 
       if (!req.user) {
@@ -92,8 +92,8 @@ export const checkCollegeAccess = async (req, res, next) => {
       });
     }
 
-    // Admin can access all resources within their college
-    // Store user's college ID for controller use
+
+
     req.userCollege = req.user.college;
 
     next();

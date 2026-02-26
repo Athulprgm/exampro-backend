@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
       ref: "College",
       required: true,
     },
-    // Student specific fields
+
     registerNumber: {
       type: String,
       sparse: true,
@@ -63,18 +63,18 @@ const userSchema = new mongoose.Schema(
       max: 8,
     },
     photo: {
-      type: String, // URL to photo
+      type: String,
       default: "",
     },
     contactNumber: {
       type: String,
     },
-    // Teacher specific fields
+
     teacherId: {
       type: String,
       sparse: true,
     },
-    // Admin specific fields
+
     adminRole: {
       type: String,
       enum: ["principal", "hod", "clerk", "admin"],
@@ -91,7 +91,7 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-// Hash password before saving
+
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     return next();
@@ -102,12 +102,12 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-// Method to compare password
+
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Remove password from JSON response
+
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;

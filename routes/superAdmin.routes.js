@@ -9,7 +9,7 @@ import { protect, authorize } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// All routes here require superadmin role
+
 router.use(protect);
 router.use(authorize("superadmin"));
 

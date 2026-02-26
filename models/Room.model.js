@@ -30,7 +30,7 @@ const roomSchema = new mongoose.Schema(
       enum: ["classroom", "lab", "hall", "auditorium"],
       default: "classroom",
     },
-    // Map coordinates for navigation
+
     coordinates: {
       x: { type: Number },
       y: { type: Number },
@@ -45,7 +45,7 @@ const roomSchema = new mongoose.Schema(
   },
 );
 
-// Compound index (Room name should be unique within a building in a college)
+
 roomSchema.index({ name: 1, building: 1, college: 1 }, { unique: true });
 
 const Room = mongoose.model("Room", roomSchema);

@@ -40,7 +40,7 @@ const examSchema = new mongoose.Schema(
     duration: {
       type: Number,
       required: true,
-      min: 30, // minutes
+      min: 30,
     },
     college: {
       type: mongoose.Schema.Types.ObjectId,

@@ -28,7 +28,7 @@ const malpracticeSchema = new mongoose.Schema(
     },
     images: [
       {
-        type: String, // Base64 or URL
+        type: String,
       },
     ],
     severity: {
